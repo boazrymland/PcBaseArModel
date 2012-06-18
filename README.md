@@ -23,6 +23,27 @@ This class is typically used as a base class to all your AR (Active Record) clas
   * `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
   * `updated_on` timestamp NULL DEFAULT NULL
   * `lock_version` int(11) DEFAULT '0'
+* An example to a custom AR class that uses this class:
+
+```php
+class MyClass extends PcBaseArModel {
+//...
+}
+```
+* After you have a model class that extends this class you can use its methods. Please refer to the code for complete documentation. Here's a list of public attributes and methods (and constants) to be aware of:
+  * **Constants**
+      * **LOCKING_ATTRIBUTE**: DB column name for holding the 'lock version' of the record (used for optimistic locking).
+      * **CREATED_ON_ATTRIBUTE**: DB column name for holding the 'created on' timestamp of the record.      
+      * **UPDATED_ON_ATTRIBUTE**: DB column name for holding the 'updated on' timestamp of the record.
+  * **Attributes**
+      * **breadcrumbsStringLength**: trimStringForBreadcrumbs($str) uses this parameter to trim the passed $str to this length.
+  * **Methods**
+      * **safelyUpdateByPk()**: Safely updates a record in optimistic lock mode. See code for full parameters list. This method is based on [CActiveRecord.updateByPk()](http://www.yiiframework.com/doc/api/1.1/CActiveRecord#updateByPk-detail)
+      * **safelyDeleteByPk()**: Safely deletes a record in optimistic lock mode. See code for full parameters list. This method is based on [CActiveRecord.deleteByuPk()](http://www.yiiframework.com/doc/api/1.1/CActiveRecord#deleteByPk-detail).
+      * **safelyUpdateByPkWithRetry()**: Simnilarly to safelyUpdateByPk() above, this method does the same but it will retry the update if the last one failed. Both the number of retries and the interval to wait in between attempts are configurable. 
+      * **isDirty()**: Would tell you if the object you're playing has changed since it was loaded from the DB or not.
+      * **trimStringForBreadcrumbs()**: Trims given strings according to length stated by $this->breadcrumbsStringLength and append ".." if was indeed trimmed.
+
 
 ## Exceptions thrown
 
