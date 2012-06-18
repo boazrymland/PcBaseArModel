@@ -19,33 +19,47 @@ This class is typically used as a base class to all your AR (Active Record) clas
 
 # Usage
 
+## DB changes required from extending classes
+
 * Models that extend this class should have the following fields defined in their DB schema (MySQL syntax given):
   * `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
   * `updated_on` timestamp NULL DEFAULT NULL
   * `lock_version` int(11) DEFAULT '0'
 * An example to a custom AR class that uses this class:
 
+## Sample code
+
+Should be as trivial as:
+
 ```php
 class MyClass extends PcBaseArModel {
 //...
 }
 ```
-* After you have a model class that extends this class you can use its methods. Please refer to the code for complete documentation. Here's a list of public attributes and methods (and constants) to be aware of:
-  * **Constants**
-      * **LOCKING_ATTRIBUTE**: DB column name for holding the 'lock version' of the record (used for optimistic locking).
-      * **CREATED_ON_ATTRIBUTE**: DB column name for holding the 'created on' timestamp of the record.      
-      * **UPDATED_ON_ATTRIBUTE**: DB column name for holding the 'updated on' timestamp of the record.
-  * **Attributes**
-      * **breadcrumbsStringLength**: trimStringForBreadcrumbs($str) uses this parameter to trim the passed $str to this length.
-  * **Methods**
-      * **safelyUpdateByPk()**: Safely updates a record in optimistic lock mode. See code for full parameters list. This method is based on [CActiveRecord.updateByPk()](http://www.yiiframework.com/doc/api/1.1/CActiveRecord#updateByPk-detail)
-      * **safelyDeleteByPk()**: Safely deletes a record in optimistic lock mode. See code for full parameters list. This method is based on [CActiveRecord.deleteByuPk()](http://www.yiiframework.com/doc/api/1.1/CActiveRecord#deleteByPk-detail).
-      * **safelyUpdateByPkWithRetry()**: Simnilarly to safelyUpdateByPk() above, this method does the same but it will retry the update if the last one failed. Both the number of retries and the interval to wait in between attempts are configurable. 
-      * **isDirty()**: Would tell you if the object you're playing has changed since it was loaded from the DB or not.
-      * **trimStringForBreadcrumbs()**: Trims given strings according to length stated by $this->breadcrumbsStringLength and append ".." if was indeed trimmed.
+
+## API 
+
+After you have a model class that extends this class you can use its methods. Please refer to the code for complete documentation. Here's a list of public attributes and methods (and constants) to be aware of:
+
+### Constants
+* **LOCKING_ATTRIBUTE**: DB column name for holding the 'lock version' of the record (used for optimistic locking).
+* **CREATED_ON_ATTRIBUTE**: DB column name for holding the 'created on' timestamp of the record.      
+* **UPDATED_ON_ATTRIBUTE**: DB column name for holding the 'updated on' timestamp of the record.
 
 
-## Exceptions thrown
+### Attributes
+
+* **breadcrumbsStringLength**: trimStringForBreadcrumbs($str) uses this parameter to trim the passed $str to this length.
+
+### Methods
+
+* **safelyUpdateByPk()**: Safely updates a record in optimistic lock mode. See code for full parameters list. This method is based on [CActiveRecord.updateByPk()](http://www.yiiframework.com/doc/api/1.1/CActiveRecord#updateByPk-detail)
+* **safelyDeleteByPk()**: Safely deletes a record in optimistic lock mode. See code for full parameters list. This method is based on [CActiveRecord.deleteByuPk()](http://www.yiiframework.com/doc/api/1.1/CActiveRecord#deleteByPk-detail).
+* **safelyUpdateByPkWithRetry()**: Simnilarly to safelyUpdateByPk() above, this method does the same but it will retry the update if the last one failed. Both the number of retries and the interval to wait in between attempts are configurable. 
+* **isDirty()**: Would tell you if the object you're playing has changed since it was loaded from the DB or not.
+* **trimStringForBreadcrumbs()**: Trims given strings according to length stated by $this->breadcrumbsStringLength and append ".." if was indeed trimmed.
+
+### Exceptions thrown
 
 The optimistic locking methods safelyUpdateByPk() and safelyDeleteByPk() can cause two types of exceptions to be throws. Your code should catch those exceptions and handle them according to your biz logic. The exceptions and their meanings are given below:
 * **PcStaleObjectErrorException**. This exception is thrown if the object to be saved is determined to be 'old' when actual saving occurrs. This is a common way to implement the "safe" in the method's name - if its thrown it means that the object to be updated, from the moment the update request has been issued until the actual DB updating has been attempted - was already updated by someone else and if it was updaetd nevertheless - we would have overwritten the data just saved by someone else.
