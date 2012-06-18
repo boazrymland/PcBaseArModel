@@ -19,6 +19,10 @@ This class is typically used as a base class to all your AR (Active Record) clas
 
 # Usage
 
+## Installation
+
+Extract the contents of this package. Place the extracted PcBaseArModel class inside /protected/components.
+
 ## DB changes required from extending classes
 
 * Models that extend this class should have the following fields defined in their DB schema (MySQL syntax given):
@@ -36,6 +40,7 @@ class MyClass extends PcBaseArModel {
 //...
 }
 ```
+After the above is done you cna use this class API as briefly described below.
 
 ## API 
 
