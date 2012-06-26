@@ -239,6 +239,25 @@ class PcBaseArModel extends CActiveRecord {
 	public function trimStringForBreadcrumbs($str) {
 		return substr($str, 0, $this->breadcrumbsStringLength) . "..";
 	}
+	/**
+	 * This method should return the 'key' of the relation() method that relate the AR model to the 'users' table.
+	 *
+	 * Child classes should be able to return the relation name that relate this model to 'User' model (=users table)
+	 * What is it good for? Sometimes, we will be handling AR models of unknown types, such as in the case of handling
+	 * 'inappropriate content', or any other case in which we get the AR model but do not know its type in advance.
+	 * In those cases, we'd like to cache the loaded AR records. Those AR objects relate (i.e. via
+	 * relations() method) to the 'users' table and in since we cache, we need to eagerly load the author username as well.
+	 * This is where this method comes in handy.
+	 * By each AR class implementing this method we can ask for the class for the relation name, rather than knowing that
+	 * in advance.
+	 *
+	 * For a working use case PcReportContent extension: PcReportContent._getContentCreatorUserId() method.
+	 *
+	 * @static
+	 * @abstract
+	 * @return string
+	 */
+	abstract public static function getCreatorRelationName();
 }
 
 /**
