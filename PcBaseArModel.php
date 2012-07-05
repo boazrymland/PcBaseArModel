@@ -60,7 +60,7 @@ class PcBaseArModel extends CActiveRecord {
 		// first, check and explode if needed on incompatible condition given
 		$this->explodeOnNonSupportedCondition($condition);
 
-		/* now, apply the locking condition which will protect again deletion if object was already updated by someone else */
+		/* now, apply the locking condition which will protect against update if the model was already updated by someone else */
 		$this->applyLockingCondition($condition);
 
 		//increment object version
@@ -77,6 +77,8 @@ class PcBaseArModel extends CActiveRecord {
 		if ($affectedRows != 1) {
 			throw new PcStaleObjectErrorException(Yii::t('PcBaseArModel', 'Data has been updated by another user so avoiding the update'));
 		}
+		// reflect the updated lock version in the model. It might be used down the road in the same request so it must to be
+		// updated to reflect the updated lock version.
 		$this->$lockingAttribute = $this->$lockingAttribute + 1;
 		return $affectedRows;
 	}
@@ -118,6 +120,20 @@ class PcBaseArModel extends CActiveRecord {
 		$lockingAttribute = self::LOCKING_ATTRIBUTE;
 		$expectedLockVersion = $this->$lockingAttribute;
 
+		/*
+		 * if safelyUpdate*...() is called several times in a single request, which is very much ok, this could cause a fatal bug since the
+		 * $this->condition_string will be applied several times, causing a complete mess in the condition a total failure of the sql statement.
+		 * Now, since during such several calls to update the model, the actual update is performed and the lock_version is advanced (by us) so
+		 * to avoid this bug we need to calculate again the expected lock version and apply it in the condition.
+		 */
+		if (strpos($this->condition_string, "$lockingAttribute = ") !== false) {
+			// condition already in. strip it. must be a reminiscence of past 'updates' to this model, in the same request
+			$this->condition_string = preg_replace("/{$lockingAttribute} = \d+/", "", $this->condition_string);
+			// strip any dangling "AND" words (the lock version condition is always concatenated at the end of the condition string so trim \
+			// from end only)
+			$this->condition_string = rtrim($this->condition_string, " ");
+			$this->condition_string = preg_replace('/AND$/', '', $this->condition_string);
+		}
 		// add to an existing condition, if such exists:
 		if (!empty($condition)) {
 			$this->condition_string .= ' AND ';
@@ -244,20 +260,49 @@ class PcBaseArModel extends CActiveRecord {
 	 *
 	 * Child classes should be able to return the relation name that relate this model to 'User' model (=users table)
 	 * What is it good for? Sometimes, we will be handling AR models of unknown types, such as in the case of handling
-	 * 'inappropriate content', or any other case in which we get the AR model but do not know its type in advance.
-	 * In those cases, we'd like to cache the loaded AR records. Those AR objects relate (i.e. via
-	 * relations() method) to the 'users' table and in since we cache, we need to eagerly load the author username as well.
+	 * a report of an 'inappropriate content', or any other case in which we get the AR model but do not know its type
+	 * in advance. In those cases, we'd like to cache the loaded AR records for future use of the same record. Those AR
+	 * objects relate (i.e. via relations() method) to the 'users' table and in since we cache the objects, we need to
+	 * eagerly load some of the creator details (like username) as well.
 	 * This is where this method comes in handy.
-	 * By each AR class implementing this method we can ask for the class for the relation name, rather than knowing that
-	 * in advance.
+	 *
+	 * By forcing each AR class that extends this base class to implement this method we can ask for the extending class
+	 * for the relation name, rather than knowing that in advance.
 	 *
 	 * For a working use case PcReportContent extension: PcReportContent._getContentCreatorUserId() method.
+	 *
+	 * If this method is irrelevant to your extending class either return null or you can throw an exception (whatever fits the
+	 * case and the reasonable logic)
 	 *
 	 * @static
 	 * @abstract
 	 * @return string
 	 */
 	abstract public static function getCreatorRelationName();
+	/**
+	 * Method returns the model's creator user id. this is a common task that is useful. This method also caches the loaded
+	 * object (or uses a cached object).
+	 * Its highly recommended to use the following content for the method implementation within your model:
+	 * > public static function getCreatorUserId($id) {
+	 * >    $model = self::model()->cache(3600)->with('user')->findByPk($id);
+	 * >    return $model->user_id;
+	 * > }
+	 * Notice that we cache the model with the (eagerly loaded) relating 'User' model. In some of my implementations I needed
+	 * to load the username of the relating user. Using the same query here and in other locations enable actual re-use of
+	 * the cached model. This way we get the entire relating user object at hand, of course at the
+	 * price of possibly high cache usage - depending on your specific site. Consider lowering the lifetime used above (3600)
+	 * if you exhaust your cache capacity.
+	 *
+	 * If this method is irrelevant to your extending class either return null or you can throw an exception (whatever fits the
+	 * case and the reasonable logic)
+	 *
+	 * @static
+	 * @abstract
+	 *
+	 * @param int $id the primary key for the model in question
+	 * @return mixed
+	 */
+	abstract public static function getCreatorUserId($id);
 }
 
 /**
