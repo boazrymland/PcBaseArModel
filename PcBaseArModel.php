@@ -3,7 +3,7 @@
  * PcBasicModel.php
  *
  */
-class PcBaseArModel extends CActiveRecord {
+abstract class PcBaseArModel extends CActiveRecord {
 	// attribute used to fascilitate optimistic locking. Or in other words - safe update/delete of records avoiding race conditions.
 	const LOCKING_ATTRIBUTE = "lock_version";
 	// updated on and created on attributes are used in a few locations below hence they're here as constants
