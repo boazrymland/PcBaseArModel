@@ -284,7 +284,7 @@ abstract class PcBaseArModel extends CActiveRecord {
 	 * object (or uses a cached object).
 	 * Its highly recommended to use the following content for the method implementation within your model:
 	 * > public static function getCreatorUserId($id) {
-	 * >    $model = self::model()->cache(3600)->with('user')->findByPk($id);
+	 * >    $model = self::model()->cache(3600)->with(self::getCreatorRelationName())->findByPk($id);
 	 * >    return $model->user_id;
 	 * > }
 	 * Notice that we cache the model with the (eagerly loaded) relating 'User' model. In some of my implementations I needed
