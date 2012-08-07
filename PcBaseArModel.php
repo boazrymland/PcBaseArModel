@@ -256,6 +256,38 @@ abstract class PcBaseArModel extends CActiveRecord {
 		return substr($str, 0, $this->breadcrumbsStringLength) . "..";
 	}
 	/**
+	 * This method tells whether a record with primary key $id exists or not.
+	 * IMPORTANT NOTE: do NOT use this method for complex situations in which the PK is not a single, simple column value.
+	 *
+	 *
+	 * @static
+	 * @param mixed $pk_value this method is designed to accept anything here - null, false, int... (which is good since
+	 *             this method could be run dynamically with unknown AR models, used for mere searching, for example).
+	 * @return bool whether the record exists or not.
+	 */
+	public static function checkExists($pk_value) {
+		// we use the following 3 statements only to enable child classes implement their own primaryKey()
+		$model_name = get_called_class();
+		$model = $model_name::model();
+		$pk_name = $model->primaryKey();
+		// check if a record exists using CActiveRecord.exists() . Its natural
+		// to look for it, and I enjoyed finding it :)
+		$exists_or_not = $model->exists("$pk_name=:pk", array(':pk' => $pk_value));
+		return $exists_or_not;
+	}
+
+	/**
+	 * Returns the primary key column name.
+	 * @see http://www.yiiframework.com/doc/api/1.0/CActiveRecord#primaryKey()-detail - read it carefulyl to see that
+	 *        it all depends on child classes implementation.
+	 *
+	 * @return string
+	 */
+	public function primaryKey() {
+		return 'id';
+	}
+
+	/**
 	 * This method should return the 'key' of the relation() method that relate the AR model to the 'users' table.
 	 *
 	 * Child classes should be able to return the relation name that relate this model to 'User' model (=users table)
