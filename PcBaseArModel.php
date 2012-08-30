@@ -247,6 +247,23 @@ abstract class PcBaseArModel extends CActiveRecord {
 	}
 
 	/**
+	 * Tells whether a specific attribute is changed in comparion to its original state once loaded from the DB.
+	 *
+	 * @param string $attribute_name
+	 * @return bool dirty or not
+	 */
+	public function isAttributeDirty($attribute_name) {
+		$temp1 = $this->originalAttributes[$attribute_name];
+		$temp2 = $this->$attribute_name;
+		// in the DB values can be null but those attributes when submitted unchanged in a form will be empty string,
+		// hence our comparison below using "!=" and not "!=="
+		if ($this->originalAttributes[$attribute_name] != $this->$attribute_name) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * returns a substring of the one given, in length determined by $this->breadcrumbsStringLength
 	 *
 	 * @param string $str source string
